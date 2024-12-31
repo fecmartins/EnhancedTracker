@@ -8,6 +8,7 @@ import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 
@@ -42,6 +43,7 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         ArrayList<Expense> expenses = new ArrayList<>();;
 
+
         while (true) {
             System.out.println("\nExpense Tracker Menu:");
             System.out.println("1. Add Expense");
@@ -56,52 +58,61 @@ public class Main {
             System.out.println("10. Exit");
             System.out.print("Enter your choice: ");
 
-            int option = scanner.nextInt();
-            scanner.nextLine(); // Consume the newline character
+            try {
+                int option = scanner.nextInt();
+                scanner.nextLine(); // Consume the newline character
 
-            switch (option) {
-                case 1:
-                    addExpense(scanner, expenses);
-                    break;
-                case 2:
-                    updateExpense(scanner, expenses);
-                    break;
-                case 3:
-                    deleteExpense(scanner, expenses);
-                    break;
-                case 4:
-                    viewAllExpenses(expenses);
-                    break;
-                case 5:
-                    viewSummaryForCategory(scanner, expenses);
-                    break;
-                case 6:
-                    viewExpenseSummary(expenses);
-                    break;
-                case 7:
-                    viewMonthlySummary(scanner, expenses);
-                    break;
-                case 8:
-                    setMonthlyBudget(scanner);
-                    break;
-                case 9:
-                    exportToCSV(expenses);
-                    break;
-                case 10:
-                    System.out.println("Exiting...");
-                    scanner.close();
-                    System.exit(0);
-                default:
-                    System.out.println("Invalid choice. Please try again.");
+                switch (option) {
+                    case 1:
+                        addExpense(scanner, expenses);
+                        break;
+                    case 2:
+                        updateExpense(scanner, expenses);
+                        break;
+                    case 3:
+                        deleteExpense(scanner, expenses);
+                        break;
+                    case 4:
+                        viewAllExpenses(expenses);
+                        break;
+                    case 5:
+                        viewSummaryForCategory(scanner, expenses);
+                        break;
+                    case 6:
+                        viewExpenseSummary(expenses);
+                        break;
+                    case 7:
+                        viewMonthlySummary(scanner, expenses);
+                        break;
+                    case 8:
+                        setMonthlyBudget(scanner);
+                        break;
+                    case 9:
+                        exportToCSV(expenses);
+                        break;
+                    case 10:
+                        System.out.println("Exiting...");
+                        scanner.close();
+                        System.exit(0);
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            } catch (InputMismatchException e) {
+                System.err.println("Invalid input. Please enter a number.");
+                scanner.nextLine(); // Consume the newline character
             }
         }
     }
 
     private static void addExpense(Scanner scanner, ArrayList<Expense> expenses) {
+       try {
         System.out.println("Enter expense description: ");
         String description = scanner.nextLine();
         System.out.print("Enter expense amount: ");
         double amount = scanner.nextDouble();
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero.");
+        }
         scanner.nextLine(); // Consume the newline character
 
         // Add date input
@@ -127,9 +138,13 @@ public class Main {
         }
 
         System.out.println("Expense added successfully!");
+         } catch (IllegalArgumentException e) {
+              System.err.println("Error adding expense: " + e.getMessage());
+    }
     }
 
     private static void updateExpense(Scanner scanner, ArrayList<Expense> expenses) {
+    try {
         System.out.println("Enter the index of the expense to update: ");
         int index = scanner.nextInt() - 1;
         scanner.nextLine(); // Consume the newline character
@@ -139,6 +154,11 @@ public class Main {
             String description = scanner.nextLine();
             System.out.println("Enter new amount: ");
             double amount = scanner.nextDouble();
+            if (amount <= 0) {
+                throw new IllegalArgumentException("Amount must be greater than zero.");
+            }
+            scanner.nextLine(); // Consume the newline character
+
             expenses.get(index).setDescription(description);
             expenses.get(index).setAmount(amount);
             System.out.println("Expense updated successfully!");
@@ -146,9 +166,16 @@ public class Main {
             System.out.println("Invalid index. Please try again.");
         }
 
+    } catch (InputMismatchException e) {
+        System.err.println("Invalid input. Please enter a number.");
+        scanner.nextLine(); // Consume the newline character
+    } catch (IllegalArgumentException e) {
+        System.err.println("Error updating expense: " + e.getMessage());
+    }
     }
 
     private static void deleteExpense(Scanner scanner, ArrayList<Expense> expenses) {
+    try {
         System.out.println("Enter the index of the expense to delete: ");
         int index = scanner.nextInt() - 1;
         scanner.nextLine(); // Consume the newline character
@@ -159,6 +186,10 @@ public class Main {
         } else {
             System.out.println("Invalid index. Please try again.");
         }
+    } catch (InputMismatchException e) {
+        System.err.println("Invalid input. Please enter a number.");
+        scanner.nextLine(); // Consume the newline character
+    }
     }
 
     private static void viewAllExpenses(ArrayList<Expense> expenses) {
