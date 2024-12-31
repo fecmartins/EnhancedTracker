@@ -1,11 +1,20 @@
 package com.martins.ExpenseTracker;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalDate;
 import java.time.Month;
 import java.time.Year;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+
 public class Main {
+
+    private static double monthlyBudget = 0.0;
+
     public static void main(String[] args) {
 
 
@@ -31,52 +40,59 @@ public class Main {
 */
 
         Scanner scanner = new Scanner(System.in);
-        ArrayList<Expense> expenses = new ArrayList<>();
+        ArrayList<Expense> expenses = new ArrayList<>();;
 
         while (true) {
             System.out.println("\nExpense Tracker Menu:");
-            System.out.println("1. Add an expense");
-            System.out.println("2. Update an expense");
-            System.out.println("3. Delete an expense");
-            System.out.println("4. View all expenses");
-            System.out.println("5. View summary of expenses");
-            System.out.println("6. View summary of expenses for a specific month");
-            System.out.println("7. Exit");
+            System.out.println("1. Add Expense");
+            System.out.println("2. Update Expense");
+            System.out.println("3. Delete Expense");
+            System.out.println("4. View All Expenses");
+            System.out.println("5. View Expenses by Category");
+            System.out.println("6. View Expense Summary");
+            System.out.println("7. View Monthly Summary");
+            System.out.println("8. Set Monthly Budget");
+            System.out.println("9. Export Expenses to CSV");
+            System.out.println("10. Exit");
+            System.out.print("Enter your choice: ");
 
             int option = scanner.nextInt();
             scanner.nextLine(); // Consume the newline character
 
             switch (option) {
                 case 1:
-                    // Add an expense
                     addExpense(scanner, expenses);
                     break;
                 case 2:
-                    // Update an expense
                     updateExpense(scanner, expenses);
                     break;
                 case 3:
-                    // Delete an expense
                     deleteExpense(scanner, expenses);
                     break;
                 case 4:
-                    // View all expenses
                     viewAllExpenses(expenses);
                     break;
                 case 5:
-                    // View summary of expenses
-                    viewSummary(expenses);
+                    viewSummaryForCategory(scanner, expenses);
                     break;
                 case 6:
-                    // View summary of expenses for a specific month
-                    viewSummaryForMonth(scanner, expenses);
+                    viewExpenseSummary(expenses);
                     break;
                 case 7:
+                    viewMonthlySummary(scanner, expenses);
+                    break;
+                case 8:
+                    setMonthlyBudget(scanner);
+                    break;
+                case 9:
+                    exportToCSV(expenses);
+                    break;
+                case 10:
                     System.out.println("Exiting...");
                     scanner.close();
                     System.exit(0);
                 default:
-                    System.out.println("Invalid option. Please try again.");
+                    System.out.println("Invalid choice. Please try again.");
             }
         }
     }
@@ -86,7 +102,30 @@ public class Main {
         String description = scanner.nextLine();
         System.out.print("Enter expense amount: ");
         double amount = scanner.nextDouble();
-        expenses.add(new Expense(description, amount));
+        scanner.nextLine(); // Consume the newline character
+
+        // Add date input
+        System.out.println("Expense date (YYYY-MM-DD): ");
+        String dateStr = scanner.nextLine();
+        LocalDate date;
+        try {
+            date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (DateTimeParseException e) {
+            System.out.println("Invalid date format. Using current date instead.");
+            date = LocalDate.now();
+        }
+
+        // Add category
+        System.out.println("Enter expense category: ");
+        String category = scanner.nextLine();
+
+        expenses.add(new Expense(description, amount, date, category));
+
+        // Check if budget is exceeded
+        if (calculateTotalExpenses(expenses) > monthlyBudget && monthlyBudget > 0) {
+            System.out.println("Warning: You have exceeded your monthly budget!");
+        }
+
         System.out.println("Expense added successfully!");
     }
 
@@ -129,15 +168,16 @@ public class Main {
         }
     }
 
-    private static void viewSummary(ArrayList<Expense> expenses) {
-        double total = 0;
-        for (Expense expense : expenses) {
-            total += expense.getAmount();
+    private static void viewExpenseSummary(ArrayList<Expense> expenses) {
+        double total = calculateTotalExpenses(expenses);
+        System.out.println("\nTotal Expenses: $" + total);
+
+        if (total > monthlyBudget && monthlyBudget > 0) {
+            System.out.println("Warning: You have exceeded your monthly budget!");
         }
-        System.out.println("Total expenses: " + total);
     }
 
-    private static void viewSummaryForMonth(Scanner scanner, ArrayList<Expense> expenses) {
+    private static void viewMonthlySummary(Scanner scanner, ArrayList<Expense> expenses) {
         System.out.print("Enter the month (e.g., January, February): ");
         String monthStr = scanner.nextLine();
         Month month = Month.valueOf(monthStr.toUpperCase());
@@ -152,4 +192,53 @@ public class Main {
 
         System.out.println("\nTotal Expenses for " + monthStr + ": $" + monthlyTotal);
     }
+
+    private static void viewSummaryForCategory(Scanner scanner, ArrayList<Expense> expenses) {
+        System.out.println("Enter category to filter by: ");
+        String category = scanner.nextLine();
+
+        System.out.println("\nExpenses for category: " + category);
+        for (Expense expense : expenses) {
+            if (expense.getCategory().equalsIgnoreCase(category)) {
+                System.out.println(expense);;
+            }
+        }
+    }
+
+    private static void setMonthlyBudget(Scanner scanner) {
+        System.out.print("Enter monthly budget: ");
+        double newBudget = scanner.nextDouble();
+        scanner.nextLine(); // Consume the newline character
+        monthlyBudget = newBudget;
+        System.out.println("Monthly budget set to $" + newBudget);
+    }
+
+    private static void exportToCSV(ArrayList<Expense> expenses) {
+        try (FileWriter writer = new FileWriter("expenses.csv")) {
+            writer.append("Date,Description,Amount,Category\n");
+            for (Expense expense : expenses) {
+                writer.append(expense.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                        .append(",")
+                        .append(expense.getDescription())
+                        .append(",")
+                        .append(Double.toString(expense.getAmount()))
+                        .append(",")
+                        .append(expense.getCategory())
+                        .append("\n");
+            }
+            System.out.println("Expenses exported to expenses.csv successfully!");
+        } catch (IOException e) {
+            System.err.println("Error exporting expenses to CSV: " + e.getMessage());
+        }
+    }
+
+    // Helper method to calculate total expenses
+    private static double calculateTotalExpenses(ArrayList<Expense> expenses) {
+        double total = 0;
+        for (Expense expense : expenses) {
+            total += expense.getAmount();
+        }
+        return total;
+    }
+
 }
