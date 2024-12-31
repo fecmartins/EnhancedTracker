@@ -265,11 +265,6 @@ public class Main {
 
     // Helper method to calculate total expenses
     private static double calculateTotalExpenses(ArrayList<Expense> expenses) {
-        double total = 0;
-        for (Expense expense : expenses) {
-            total += expense.getAmount();
-        }
-        return total;
+        return ExpenseUtils.calculateTotalExpenses(expenses);
     }
-
 }
