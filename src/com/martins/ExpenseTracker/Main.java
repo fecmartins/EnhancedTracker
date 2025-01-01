@@ -9,12 +9,14 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
 
 
 public class Main {
 
     private static double monthlyBudget = 0.0;
+
 
     public static void main(String[] args) {
 
@@ -41,8 +43,7 @@ public class Main {
 */
 
         Scanner scanner = new Scanner(System.in);
-        ArrayList<Expense> expenses = new ArrayList<>();;
-
+        ArrayList<Expense> expenses = new ArrayList<>();
 
         while (true) {
             System.out.println("\nExpense Tracker Menu:");
@@ -54,8 +55,9 @@ public class Main {
             System.out.println("6. View Expense Summary");
             System.out.println("7. View Monthly Summary");
             System.out.println("8. Set Monthly Budget");
-            System.out.println("9. Export Expenses to CSV");
-            System.out.println("10. Exit");
+            System.out.println("9. Export to CSV");
+            System.out.println("10. Import from CSV");
+            System.out.println("11. Exit");
             System.out.print("Enter your choice: ");
 
             try {
@@ -91,6 +93,9 @@ public class Main {
                         exportToCSV(expenses);
                         break;
                     case 10:
+                        importFromCSV(expenses);
+                        break;
+                    case 11:
                         System.out.println("Exiting...");
                         scanner.close();
                         System.exit(0);
@@ -260,6 +265,16 @@ public class Main {
             System.out.println("Expenses exported to expenses.csv successfully!");
         } catch (IOException e) {
             System.err.println("Error exporting expenses to CSV: " + e.getMessage());
+        }
+    }
+
+    private static void importFromCSV(ArrayList<Expense> expenses) {
+        try {
+            List<Expense> importedExpenses = CSVImporter.importFromCSV("expenses.csv");
+            expenses.addAll(importedExpenses);
+            System.out.println("Expenses imported successfully!");
+        } catch (Exception e) {
+            System.err.println("Error importing expenses: " + e.getMessage());
         }
     }
 
