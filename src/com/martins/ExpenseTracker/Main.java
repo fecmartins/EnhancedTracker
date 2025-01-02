@@ -149,52 +149,90 @@ public class Main {
     }
 
     private static void updateExpense(Scanner scanner, ArrayList<Expense> expenses) {
-    try {
-        System.out.println("Enter the index of the expense to update: ");
-        int index = scanner.nextInt() - 1;
-        scanner.nextLine(); // Consume the newline character
-
-        if (index >= 0 && index < expenses.size()) {
-            System.out.println("Enter new description: ");
-            String description = scanner.nextLine();
-            System.out.println("Enter new amount: ");
-            double amount = scanner.nextDouble();
-            if (amount <= 0) {
-                throw new IllegalArgumentException("Amount must be greater than zero.");
-            }
+        try {
+            System.out.println("Enter the ID of the expense to update: ");
+            int id = scanner.nextInt();
             scanner.nextLine(); // Consume the newline character
 
-            expenses.get(index).setDescription(description);
-            expenses.get(index).setAmount(amount);
-            System.out.println("Expense updated successfully!");
-        } else {
-            System.out.println("Invalid index. Please try again.");
-        }
+            Expense expenseToUpdate = null;
+            for (Expense expense : expenses) {
+                if (expense.getId() == id) {
+                    expenseToUpdate = expense;
+                    break;
+                }
+            }
 
-    } catch (InputMismatchException e) {
-        System.err.println("Invalid input. Please enter a number.");
-        scanner.nextLine(); // Consume the newline character
-    } catch (IllegalArgumentException e) {
-        System.err.println("Error updating expense: " + e.getMessage());
-    }
+            if (expenseToUpdate != null) {
+                System.out.println("Enter new description (leave blank to keep current): ");
+                String description = scanner.nextLine();
+                if (!description.isEmpty()) {
+                    expenseToUpdate.setDescription(description);
+                }
+
+                System.out.println("Enter new amount (leave blank to keep current): ");
+                String amountStr = scanner.nextLine();
+                if (!amountStr.isEmpty()) {
+                    double amount = Double.parseDouble(amountStr);
+                    if (amount > 0) {
+                        expenseToUpdate.setAmount(amount);
+                    } else {
+                        throw new IllegalArgumentException("Amount must be greater than zero.");
+                    }
+                }
+
+                System.out.println("Enter new date (YYYY-MM-DD) (leave blank to keep current): ");
+                String dateStr = scanner.nextLine();
+                if (!dateStr.isEmpty()) {
+                    try {
+                        LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                        expenseToUpdate.setDate(date);
+                    } catch (DateTimeParseException e) {
+                        System.out.println("Invalid date format. Keeping current date.");
+                    }
+                }
+
+                System.out.println("Enter new category (leave blank to keep current): ");
+                String category = scanner.nextLine();
+                if (!category.isEmpty()) {
+                    expenseToUpdate.setCategory(category);
+                }
+
+                System.out.println("Expense updated successfully!");
+            } else {
+                System.out.println("Expense with ID " + id + " not found. Please try again.");
+            }
+        } catch (InputMismatchException e) {
+            System.err.println("Invalid input. Please enter a number.");
+            scanner.nextLine(); // Consume the newline character
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error updating expense: " + e.getMessage());
+        }
     }
 
     private static void deleteExpense(Scanner scanner, ArrayList<Expense> expenses) {
-    try {
-        System.out.println("Enter the index of the expense to delete: ");
-        int index = scanner.nextInt() - 1;
-        scanner.nextLine(); // Consume the newline character
+        try {
+            System.out.println("Enter the ID of the expense to delete: ");
+            int id = scanner.nextInt();
+            scanner.nextLine(); // Consume the newline character
 
-        if (index >= 0 && index < expenses.size()) {
-            expenses.remove(index);
-            System.out.println("Expense deleted successfully!");
-        } else {
-            System.out.println("Invalid index. Please try again.");
+            Expense expenseToRemove = null;
+            for (Expense expense : expenses) {
+                if (expense.getId() == id) {
+                    expenseToRemove = expense;
+                    break;
+                }
+            }
+
+            if (expenseToRemove != null) {
+                expenses.remove(expenseToRemove);
+                System.out.println("Expense deleted successfully!");
+            } else {
+                System.out.println("Expense with ID " + id + " not found. Please try again.");
+            }
+        } catch (InputMismatchException e) {
+            System.err.println("Invalid input. Please enter a number.");
+            scanner.nextLine(); // Consume the newline character
         }
-    } catch (InputMismatchException e) {
-        System.err.println("Invalid input. Please enter a number.");
-        scanner.nextLine(); // Consume the newline character
-    }
     }
 
     private static void viewAllExpenses(ArrayList<Expense> expenses) {
