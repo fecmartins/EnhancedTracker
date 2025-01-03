@@ -28,7 +28,7 @@ public class CSVImporter {
                         // Replace comma with dot for decimal separator
                         String category = data[3];
 
-                        expenses.add(new Expense(description, amount, date, category));
+                        expenses.add(new Expense(description, amount, date, ExpenseCategory.valueOf(category)));
                     } catch (Exception e) {
                         System.err.println("Error parsing line: " + line + ". Skipping.");
                     }

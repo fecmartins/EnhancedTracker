@@ -135,8 +135,7 @@ public class Main {
         System.out.println("Enter expense category: ");
         String category = scanner.nextLine();
 
-        expenses.add(new Expense(description, amount, date, category));
-
+        expenses.add(new Expense(description, amount, date, ExpenseCategory.valueOf(category.toUpperCase())));
         // Check if budget is exceeded
         if (calculateTotalExpenses(expenses) > monthlyBudget && monthlyBudget > 0) {
             System.out.println("Warning: You have exceeded your monthly budget!");
@@ -194,7 +193,7 @@ public class Main {
                 System.out.println("Enter new category (leave blank to keep current): ");
                 String category = scanner.nextLine();
                 if (!category.isEmpty()) {
-                    expenseToUpdate.setCategory(category);
+                    expenseToUpdate.setCategory(ExpenseCategory.valueOf(category.toUpperCase()));
                 }
 
                 System.out.println("Expense updated successfully!");
@@ -273,8 +272,8 @@ public class Main {
 
         System.out.println("\nExpenses for category: " + category);
         for (Expense expense : expenses) {
-            if (expense.getCategory().equalsIgnoreCase(category)) {
-                System.out.println(expense);;
+            if (expense.getCategory().name().equalsIgnoreCase(category)) {
+                System.out.println(expense);
             }
         }
     }
@@ -297,7 +296,7 @@ public class Main {
                         .append(",")
                         .append(Double.toString(expense.getAmount()))
                         .append(",")
-                        .append(expense.getCategory())
+                        .append(expense.getCategory().name())
                         .append("\n");
             }
             System.out.println("Expenses exported to expenses.csv successfully!");

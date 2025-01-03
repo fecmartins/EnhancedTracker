@@ -1,26 +1,39 @@
 package com.martins.ExpenseTracker;
 
+import jakarta.persistence.*;
+import javax.validation.constraints.*;
 import java.time.LocalDate;
 
+@Entity
+@Table(name = "expenses")
 public class Expense {
 
-    private static int lastId = 0; // Static variable to keep track of the last assigned ID
-    private int id; // ID field for each expense
+    private static long lastId = 0; // Static variable to keep track of the last assigned ID
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private LocalDate date;
+
+    @NotNull
+    @Size(min = 1, max = 255)
+    @Column(nullable = false)
     private String description;
+
+    @NotNull
+    @DecimalMin(value = "0.01")
+    @Column(nullable = false, precision = 10, scale = 2)
     private double amount;
-    private LocalDate date; // Added date field
-    private String category; // Added category field
 
-    public Expense(String description, double amount, LocalDate date, String category) {
-        this.id = ++lastId; // Increment lastId and assign it to the current object's ID
-        this.description = description;
-        this.amount = amount;
-        this.date = date;
-        this.category = category;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ExpenseCategory category;
 
-    }
-
-    public int getId() {
+    // Getters and Setters (using Lombok or manually)
+    public long getId() {
         return id;
     }
 
@@ -32,7 +45,7 @@ public class Expense {
         return amount;
     }
 
-    public String getCategory() {
+    public ExpenseCategory getCategory() {
         return category;
     }
 
@@ -48,7 +61,7 @@ public class Expense {
         this.date = date;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(ExpenseCategory category) {
         this.category = category;
     }
 
@@ -59,6 +72,22 @@ public class Expense {
 
     public LocalDate getDate() {
         return date;
+    }
+
+
+    // Constructor
+    public Expense(String description, double amount, LocalDate date, ExpenseCategory category) {
+        this.id = ++lastId; // Increment lastId and assign it to the current object's ID
+        this.description = description;
+        this.amount = amount;
+        this.date = date;
+        this.category = category;
+
+        // ...
+    }
+
+    public Expense() {
+        // Default constructor for JPA
     }
 
 }
