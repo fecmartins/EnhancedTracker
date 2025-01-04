@@ -3,8 +3,9 @@ package com.martins.ExpenseTracker;
 public enum ExpenseCategory {
     FOOD,
     TRANSPORTATION,
-    ACCOMMODATION,
+    HOUSING,
+    UTILITIES,
     ENTERTAINMENT,
-    SHOPPING,
+    HEALTHCARE,
     OTHER
 }

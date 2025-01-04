@@ -41,4 +41,3 @@ target/
 *.ear
 hs_err_pid*
 .env
-.vscode/

@@ -1,322 +1,238 @@
 package com.martins.ExpenseTracker;
 
-import java.io.FileWriter;
-import java.io.IOException;
+import com.martins.ExpenseTracker.Expense;
+import com.martins.ExpenseTracker.ExpenseCategory;
+import com.martins.ExpenseTracker.service.ExpenseService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.Month;
-import java.time.Year;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
-
+@Component
 public class Main {
+    private final ExpenseService expenseService;
+    private final Scanner scanner;
 
-    private static double monthlyBudget = 0.0;
+    @Autowired
+    public Main(ExpenseService expenseService) {
+        this.expenseService = expenseService;
+        this.scanner = new Scanner(System.in);
+    }
 
-
-    public static void main(String[] args) {
-
-
-/*      Expense Tracker
-
-        Requirements
-
-        Application should run from the command line and should have the following features:
-
-        - Users can add an expense with a description and amount.
-        - Users can update an expense.
-        - Users can delete an expense.
-        - Users can view all expenses.
-        - Users can view a summary of all expenses.
-        - Users can view a summary of expenses for a specific month (of current year).
-
-        Here are some additional features that you can add to the application:
-
-        - Add expense categories and allow users to filter expenses by category.
-        - Allow users to set a budget for each month and show a warning when the user exceeds the budget.
-        - Allow users to export expenses to a CSV file.
-
-*/
-
-        Scanner scanner = new Scanner(System.in);
-        ArrayList<Expense> expenses = new ArrayList<>();
-
-        while (true) {
-            System.out.println("\nExpense Tracker Menu:");
-            System.out.println("1. Add Expense");
-            System.out.println("2. Update Expense");
-            System.out.println("3. Delete Expense");
-            System.out.println("4. View All Expenses");
-            System.out.println("5. View Expenses by Category");
-            System.out.println("6. View Expense Summary");
-            System.out.println("7. View Monthly Summary");
-            System.out.println("8. Set Monthly Budget");
-            System.out.println("9. Export to CSV");
-            System.out.println("10. Import from CSV");
-            System.out.println("11. Exit");
-            System.out.print("Enter your choice: ");
-
+    public void run() {
+        boolean running = true;
+        while (running) {
+            displayMenu();
             try {
-                int option = scanner.nextInt();
-                scanner.nextLine(); // Consume the newline character
-
-                switch (option) {
-                    case 1:
-                        addExpense(scanner, expenses);
-                        break;
-                    case 2:
-                        updateExpense(scanner, expenses);
-                        break;
-                    case 3:
-                        deleteExpense(scanner, expenses);
-                        break;
-                    case 4:
-                        viewAllExpenses(expenses);
-                        break;
-                    case 5:
-                        viewSummaryForCategory(scanner, expenses);
-                        break;
-                    case 6:
-                        viewExpenseSummary(expenses);
-                        break;
-                    case 7:
-                        viewMonthlySummary(scanner, expenses);
-                        break;
-                    case 8:
-                        setMonthlyBudget(scanner);
-                        break;
-                    case 9:
-                        exportToCSV(expenses);
-                        break;
-                    case 10:
-                        importFromCSV(expenses);
-                        break;
-                    case 11:
-                        System.out.println("Exiting...");
-                        scanner.close();
-                        System.exit(0);
-                    default:
-                        System.out.println("Invalid choice. Please try again.");
-                }
-            } catch (InputMismatchException e) {
-                System.err.println("Invalid input. Please enter a number.");
-                scanner.nextLine(); // Consume the newline character
+                int choice = getValidIntInput("Choose an option: ", 1, 5);
+                running = processMenuChoice(choice);
+            } catch (Exception e) {
+                System.out.println("An error occurred: " + e.getMessage());
+                scanner.nextLine(); // Clear the scanner buffer
             }
         }
+        scanner.close();
     }
 
-    private static void addExpense(Scanner scanner, ArrayList<Expense> expenses) {
-       try {
-        System.out.println("Enter expense description: ");
-        String description = scanner.nextLine();
-        System.out.print("Enter expense amount: ");
-        double amount = scanner.nextDouble();
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero.");
-        }
-        scanner.nextLine(); // Consume the newline character
-
-        // Add date input
-        System.out.println("Expense date (YYYY-MM-DD): ");
-        String dateStr = scanner.nextLine();
-        LocalDate date;
+    private boolean processMenuChoice(int choice) {
         try {
-            date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        } catch (DateTimeParseException e) {
-            System.out.println("Invalid date format. Using current date instead.");
-            date = LocalDate.now();
+            return switch (choice) {
+                case 1 -> { addExpense(); yield true; }
+                case 2 -> { viewExpenses(); yield true; }
+                case 3 -> { updateExpense(); yield true; }
+                case 4 -> { deleteExpense(); yield true; }
+                case 5 -> false;
+                default -> { 
+                    System.out.println("Invalid option. Please try again.");
+                    yield true;
+                }
+            };
+        } catch (Exception e) {
+            System.out.println("Error processing your choice: " + e.getMessage());
+            return true;
         }
-
-        // Add category
-        System.out.println("Enter expense category: ");
-        String category = scanner.nextLine();
-
-        expenses.add(new Expense(description, amount, date, ExpenseCategory.valueOf(category.toUpperCase())));
-        // Check if budget is exceeded
-        if (calculateTotalExpenses(expenses) > monthlyBudget && monthlyBudget > 0) {
-            System.out.println("Warning: You have exceeded your monthly budget!");
-        }
-
-        System.out.println("Expense added successfully!");
-         } catch (IllegalArgumentException e) {
-              System.err.println("Error adding expense: " + e.getMessage());
-    }
     }
 
-    private static void updateExpense(Scanner scanner, ArrayList<Expense> expenses) {
+    private void displayMenu() {
+        System.out.println("\n=== Expense Tracker ===");
+        System.out.println("1. Add Expense");
+        System.out.println("2. View Expenses");
+        System.out.println("3. Update Expense");
+        System.out.println("4. Delete Expense");
+        System.out.println("5. Exit");
+    }
+
+    private void addExpense() {
         try {
-            System.out.println("Enter the ID of the expense to update: ");
-            int id = scanner.nextInt();
-            scanner.nextLine(); // Consume the newline character
+            String description = getValidStringInput("Enter description: ");
+            BigDecimal amount = getValidAmount("Enter amount: ");
+            ExpenseCategory category = getValidCategory();
 
-            Expense expenseToUpdate = null;
-            for (Expense expense : expenses) {
-                if (expense.getId() == id) {
-                    expenseToUpdate = expense;
-                    break;
-                }
-            }
-
-            if (expenseToUpdate != null) {
-                System.out.println("Enter new description (leave blank to keep current): ");
-                String description = scanner.nextLine();
-                if (!description.isEmpty()) {
-                    expenseToUpdate.setDescription(description);
-                }
-
-                System.out.println("Enter new amount (leave blank to keep current): ");
-                String amountStr = scanner.nextLine();
-                if (!amountStr.isEmpty()) {
-                    double amount = Double.parseDouble(amountStr);
-                    if (amount > 0) {
-                        expenseToUpdate.setAmount(amount);
-                    } else {
-                        throw new IllegalArgumentException("Amount must be greater than zero.");
-                    }
-                }
-
-                System.out.println("Enter new date (YYYY-MM-DD) (leave blank to keep current): ");
-                String dateStr = scanner.nextLine();
-                if (!dateStr.isEmpty()) {
-                    try {
-                        LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                        expenseToUpdate.setDate(date);
-                    } catch (DateTimeParseException e) {
-                        System.out.println("Invalid date format. Keeping current date.");
-                    }
-                }
-
-                System.out.println("Enter new category (leave blank to keep current): ");
-                String category = scanner.nextLine();
-                if (!category.isEmpty()) {
-                    expenseToUpdate.setCategory(ExpenseCategory.valueOf(category.toUpperCase()));
-                }
-
-                System.out.println("Expense updated successfully!");
-            } else {
-                System.out.println("Expense with ID " + id + " not found. Please try again.");
-            }
-        } catch (InputMismatchException e) {
-            System.err.println("Invalid input. Please enter a number.");
-            scanner.nextLine(); // Consume the newline character
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error updating expense: " + e.getMessage());
+            Expense expense = new Expense(description, amount, LocalDate.now(), category);
+            expenseService.saveExpense(expense);
+            System.out.println("Expense added successfully!");
+        } catch (Exception e) {
+            System.out.println("Error adding expense: " + e.getMessage());
         }
     }
 
-    private static void deleteExpense(Scanner scanner, ArrayList<Expense> expenses) {
+    private void viewExpenses() {
         try {
-            System.out.println("Enter the ID of the expense to delete: ");
-            int id = scanner.nextInt();
-            scanner.nextLine(); // Consume the newline character
+            List<Expense> expenses = expenseService.getAllExpenses();
+            if (expenses.isEmpty()) {
+                System.out.println("No expenses found.");
+                return;
+            }
+            displayExpenses(expenses);
+        } catch (Exception e) {
+            System.out.println("Error viewing expenses: " + e.getMessage());
+        }
+    }
 
-            Expense expenseToRemove = null;
-            for (Expense expense : expenses) {
-                if (expense.getId() == id) {
-                    expenseToRemove = expense;
-                    break;
-                }
+    private void updateExpense() {
+        try {
+            viewExpenses();
+            Long id = getValidLongInput("Enter expense ID to update: ");
+            
+            Expense existingExpense = expenseService.getExpenseById(id)
+                .orElseThrow(() -> new RuntimeException("Expense not found with ID: " + id));
+
+            System.out.println("Current expense details:");
+            displayExpense(existingExpense);
+
+            String description = getValidStringInput("Enter new description (press Enter to keep current): ");
+            if (!description.isEmpty()) {
+                existingExpense.setDescription(description);
             }
 
-            if (expenseToRemove != null) {
-                expenses.remove(expenseToRemove);
+            String amountStr = getValidStringInput("Enter new amount (press Enter to keep current): ");
+            if (!amountStr.isEmpty()) {
+                BigDecimal amount = validateAmount(new BigDecimal(amountStr));
+                existingExpense.setAmount(amount);
+            }
+
+            String categoryStr = getValidStringInput("Enter new category (press Enter to keep current): ");
+            if (!categoryStr.isEmpty()) {
+                existingExpense.setCategory(ExpenseCategory.valueOf(categoryStr.toUpperCase()));
+            }
+
+            expenseService.saveExpense(existingExpense);
+            System.out.println("Expense updated successfully!");
+        } catch (Exception e) {
+            System.out.println("Error updating expense: " + e.getMessage());
+        }
+    }
+
+    private void deleteExpense() {
+        try {
+            viewExpenses();
+            Long id = getValidLongInput("Enter expense ID to delete: ");
+            
+            if (!expenseService.getExpenseById(id).isPresent()) {
+                System.out.println("Expense not found with ID: " + id);
+                return;
+            }
+
+            String confirm = getValidStringInput("Are you sure you want to delete this expense? (y/n): ");
+            if (confirm.toLowerCase().startsWith("y")) {
+                expenseService.deleteExpense(id);
                 System.out.println("Expense deleted successfully!");
             } else {
-                System.out.println("Expense with ID " + id + " not found. Please try again.");
+                System.out.println("Deletion cancelled.");
             }
-        } catch (InputMismatchException e) {
-            System.err.println("Invalid input. Please enter a number.");
-            scanner.nextLine(); // Consume the newline character
-        }
-    }
-
-    private static void viewAllExpenses(ArrayList<Expense> expenses) {
-        System.out.println("\nAll expenses:");
-        for (Expense expense : expenses) {
-            System.out.println(expense);
-        }
-    }
-
-    private static void viewExpenseSummary(ArrayList<Expense> expenses) {
-        double total = calculateTotalExpenses(expenses);
-        System.out.println("\nTotal Expenses: $" + total);
-
-        if (total > monthlyBudget && monthlyBudget > 0) {
-            System.out.println("Warning: You have exceeded your monthly budget!");
-        }
-    }
-
-    private static void viewMonthlySummary(Scanner scanner, ArrayList<Expense> expenses) {
-        System.out.print("Enter the month (e.g., January, February): ");
-        String monthStr = scanner.nextLine();
-        Month month = Month.valueOf(monthStr.toUpperCase());
-        int currentYear = Year.now().getValue();
-
-        double monthlyTotal = 0;
-        for (Expense expense : expenses) {
-            if (expense.getDate().getMonth() == month && expense.getDate().getYear() == currentYear) {
-                monthlyTotal += expense.getAmount();
-            }
-        }
-
-        System.out.println("\nTotal Expenses for " + monthStr + ": $" + monthlyTotal);
-    }
-
-    private static void viewSummaryForCategory(Scanner scanner, ArrayList<Expense> expenses) {
-        System.out.println("Enter category to filter by: ");
-        String category = scanner.nextLine();
-
-        System.out.println("\nExpenses for category: " + category);
-        for (Expense expense : expenses) {
-            if (expense.getCategory().name().equalsIgnoreCase(category)) {
-                System.out.println(expense);
-            }
-        }
-    }
-
-    private static void setMonthlyBudget(Scanner scanner) {
-        System.out.print("Enter monthly budget: ");
-        double newBudget = scanner.nextDouble();
-        scanner.nextLine(); // Consume the newline character
-        monthlyBudget = newBudget;
-        System.out.println("Monthly budget set to $" + newBudget);
-    }
-
-    private static void exportToCSV(ArrayList<Expense> expenses) {
-        try (FileWriter writer = new FileWriter("expenses.csv")) {
-            writer.append("Date,Description,Amount,Category\n");
-            for (Expense expense : expenses) {
-                writer.append(expense.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                        .append(",")
-                        .append(expense.getDescription())
-                        .append(",")
-                        .append(Double.toString(expense.getAmount()))
-                        .append(",")
-                        .append(expense.getCategory().name())
-                        .append("\n");
-            }
-            System.out.println("Expenses exported to expenses.csv successfully!");
-        } catch (IOException e) {
-            System.err.println("Error exporting expenses to CSV: " + e.getMessage());
-        }
-    }
-
-    private static void importFromCSV(ArrayList<Expense> expenses) {
-        try {
-            List<Expense> importedExpenses = CSVImporter.importFromCSV("expenses.csv");
-            expenses.addAll(importedExpenses);
-            System.out.println("Expenses imported successfully!");
         } catch (Exception e) {
-            System.err.println("Error importing expenses: " + e.getMessage());
+            System.out.println("Error deleting expense: " + e.getMessage());
         }
     }
 
-    // Helper method to calculate total expenses
-    private static double calculateTotalExpenses(ArrayList<Expense> expenses) {
-        return ExpenseUtils.calculateTotalExpenses(expenses);
+    // Helper methods for input validation and display
+    private int getValidIntInput(String prompt, int min, int max) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                int input = scanner.nextInt();
+                scanner.nextLine(); // consume newline
+                if (input >= min && input <= max) {
+                    return input;
+                }
+                System.out.printf("Please enter a number between %d and %d%n", min, max);
+            } catch (InputMismatchException e) {
+                System.out.println("Please enter a valid number.");
+                scanner.nextLine(); // consume invalid input
+            }
+        }
+    }
+
+    private Long getValidLongInput(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                return scanner.nextLong();
+            } catch (InputMismatchException e) {
+                System.out.println("Please enter a valid number.");
+                scanner.nextLine(); // consume invalid input
+            }
+        }
+    }
+
+    private String getValidStringInput(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextLine().trim();
+    }
+
+    private BigDecimal getValidAmount(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                BigDecimal amount = new BigDecimal(scanner.nextLine());
+                return validateAmount(amount);
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    private BigDecimal validateAmount(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero.");
+        }
+        return amount;
+    }
+
+    private ExpenseCategory getValidCategory() {
+        while (true) {
+            try {
+                System.out.println("Available categories:");
+                for (ExpenseCategory category : ExpenseCategory.values()) {
+                    System.out.println("- " + category);
+                }
+                String input = getValidStringInput("Enter category: ");
+                return ExpenseCategory.valueOf(input.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid category. Please try again.");
+            }
+        }
+    }
+
+    private void displayExpenses(List<Expense> expenses) {
+        System.out.println("\nExpense List:");
+        System.out.println("----------------------------------------");
+        expenses.forEach(this::displayExpense);
+        System.out.println("----------------------------------------");
+    }
+
+    private void displayExpense(Expense expense) {
+        System.out.printf("ID: %d%nDescription: %s%nAmount: $%.2f%nDate: %s%nCategory: %s%n%n",
+            expense.getId(),
+            expense.getDescription(),
+            expense.getAmount(),
+            expense.getDate(),
+            expense.getCategory());
     }
 }

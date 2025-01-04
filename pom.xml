@@ -58,6 +58,19 @@
         <version>4.0.2</version>
     </dependency>
 
+    
+      <dependency>
+        <groupId>dev.merge.api</groupId>
+        <artifactId>merge-java-client-core</artifactId>
+        <version>0.0.1</version>
+      </dependency>
+    <!-- PostgreSQL JDBC Driver -->
+    <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+
     </dependencies>
 
 
