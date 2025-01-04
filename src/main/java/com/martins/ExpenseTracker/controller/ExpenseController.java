@@ -1,8 +1,11 @@
 package com.martins.ExpenseTracker.controller;
 
 import com.martins.ExpenseTracker.Expense;
+import com.martins.ExpenseTracker.ExpenseCategory;
 import com.martins.ExpenseTracker.service.ExpenseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/expenses")
 public class ExpenseController {
+    
     private final ExpenseService expenseService;
 
     @Autowired
@@ -24,30 +28,41 @@ public class ExpenseController {
     }
 
     @PostMapping
-    public Expense createExpense(@RequestBody Expense expense) {
+    public Expense addExpense(@RequestBody Expense expense) {
         return expenseService.saveExpense(expense);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Expense> getExpenseById(@PathVariable Long id) {
+    public Expense getExpense(@PathVariable Long id) {
         return expenseService.getExpenseById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Expense> updateExpense(@PathVariable Long id, @RequestBody Expense expense) {
-        try {
-            Expense updatedExpense = expenseService.updateExpense(id, expense);
-            return ResponseEntity.ok(updatedExpense);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+            .orElseThrow(() -> new RuntimeException("Expense not found with id: " + id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
+    public void deleteExpense(@PathVariable Long id) {
         expenseService.deleteExpense(id);
-        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}")
+    public Expense updateExpense(@PathVariable Long id, @RequestBody Expense expense) {
+        return expenseService.updateExpense(id, expense);
+    }
+
+    @GetMapping("/category/{category}")
+    public List<Expense> getExpensesByCategory(@PathVariable ExpenseCategory category) {
+        return expenseService.getExpensesByCategory(category);
+    }
+
+    @GetMapping("/export/csv")
+    public ResponseEntity<byte[]> exportToCSV() {
+        byte[] csvData = expenseService.exportToCSV();
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+        headers.setContentDispositionFormData("attachment", "expenses.csv");
+        
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(csvData);
     }
 } 

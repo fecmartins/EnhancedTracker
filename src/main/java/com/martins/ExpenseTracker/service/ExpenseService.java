@@ -1,15 +1,19 @@
 package com.martins.ExpenseTracker.service;
 
 import com.martins.ExpenseTracker.Expense;
+import com.martins.ExpenseTracker.ExpenseCategory;
 import com.martins.ExpenseTracker.repository.ExpenseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class ExpenseService {
+    
     private final ExpenseRepository expenseRepository;
 
     @Autowired
@@ -21,12 +25,12 @@ public class ExpenseService {
         return expenseRepository.findAll();
     }
 
-    public Expense saveExpense(Expense expense) {
-        return expenseRepository.save(expense);
-    }
-
     public Optional<Expense> getExpenseById(Long id) {
         return expenseRepository.findById(id);
+    }
+
+    public Expense saveExpense(Expense expense) {
+        return expenseRepository.save(expense);
     }
 
     public void deleteExpense(Long id) {
@@ -43,5 +47,29 @@ public class ExpenseService {
         expense.setCategory(expenseDetails.getCategory());
 
         return expenseRepository.save(expense);
+    }
+
+    public List<Expense> getExpensesByCategory(ExpenseCategory category) {
+        return expenseRepository.findByCategory(category);
+    }
+
+    public byte[] exportToCSV() {
+        List<Expense> expenses = expenseRepository.findAll();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintWriter writer = new PrintWriter(out);
+
+        // Write CSV header
+        writer.println("ID,Description,Amount,Date,Category");
+
+        // Write expense data
+        expenses.forEach(expense -> writer.printf("%d,%s,%.2f,%s,%s%n",
+            expense.getId(),
+            expense.getDescription().replace(",", ";"),  // Escape commas in description
+            expense.getAmount(),
+            expense.getDate(),
+            expense.getCategory()));
+
+        writer.flush();
+        return out.toByteArray();
     }
 } 
