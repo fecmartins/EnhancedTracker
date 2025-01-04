@@ -27,3 +27,18 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+.iml
+.idea/
+.gradle/
+build/
+target/
+.cache/
+*.class
+*.log
+*.jar
+*.war
+*.ear
+hs_err_pid*
+.env
+.vscode/

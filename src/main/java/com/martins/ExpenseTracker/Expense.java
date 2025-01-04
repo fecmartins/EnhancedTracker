@@ -1,7 +1,9 @@
 package com.martins.ExpenseTracker;
 
 import jakarta.persistence.*;
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.DecimalMin;
 import java.time.LocalDate;
 
 @Entity
