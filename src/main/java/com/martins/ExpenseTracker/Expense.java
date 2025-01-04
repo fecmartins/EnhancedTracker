@@ -1,10 +1,8 @@
 package com.martins.ExpenseTracker;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.DecimalMin;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "expenses")
@@ -19,17 +17,12 @@ public class Expense {
     @Column(nullable = false)
     private LocalDate date;
 
-    @NotNull
-    @Size(min = 1, max = 255)
     @Column(nullable = false)
     private String description;
 
-    @NotNull
-    @DecimalMin(value = "0.01")
-    @Column(nullable = false, precision = 10, scale = 2)
-    private double amount;
+    @Column(nullable = false, precision = 10, scale = 2, columnDefinition = "DECIMAL(10,2)")
+    private BigDecimal amount;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ExpenseCategory category;
@@ -43,7 +36,7 @@ public class Expense {
         return description;
     }
 
-    public double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
@@ -55,7 +48,7 @@ public class Expense {
         this.description = description;
     }
 
-    public void setAmount(double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
@@ -78,14 +71,12 @@ public class Expense {
 
 
     // Constructor
-    public Expense(String description, double amount, LocalDate date, ExpenseCategory category) {
-        this.id = ++lastId; // Increment lastId and assign it to the current object's ID
+    public Expense(String description, BigDecimal amount, LocalDate date, ExpenseCategory category) {
+        this.id = ++lastId;
         this.description = description;
         this.amount = amount;
         this.date = date;
         this.category = category;
-
-        // ...
     }
 
     public Expense() {
