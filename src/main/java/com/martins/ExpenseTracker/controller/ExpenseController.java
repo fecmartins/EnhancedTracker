@@ -2,12 +2,15 @@ package com.martins.ExpenseTracker.controller;
 
 import com.martins.ExpenseTracker.Expense;
 import com.martins.ExpenseTracker.ExpenseCategory;
+import com.martins.ExpenseTracker.CSVImporter;
 import com.martins.ExpenseTracker.service.ExpenseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -64,5 +67,17 @@ public class ExpenseController {
         return ResponseEntity.ok()
             .headers(headers)
             .body(csvData);
+    }
+
+    @PostMapping("/import/csv")
+    public ResponseEntity<String> importFromCSV(@RequestParam("file") MultipartFile file) {
+        try {
+            List<Expense> importedExpenses = CSVImporter.importExpenses(file);
+            expenseService.saveAllExpenses(importedExpenses);
+            return ResponseEntity.ok(String.format("Successfully imported %d expenses", importedExpenses.size()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Error importing CSV: " + e.getMessage());
+        }
     }
 } 

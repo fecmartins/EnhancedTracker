@@ -1,46 +1,37 @@
 package com.martins.ExpenseTracker;
 
+import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CSVImporter {
-
-    public static List<Expense> importFromCSV(String filePath) {
+    
+    public static List<Expense> importExpenses(MultipartFile file) throws Exception {
         List<Expense> expenses = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            br.readLine(); // Skip the header line (if present)
-
-            while ((line = br.readLine()) != null) {
-                String[] data = line.split(";"); // Use semicolon as delimiter
-                if (data.length == 4) {
-                    try {
-                        LocalDate date = LocalDate.parse(data[0], DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                        // Adjust date format to "dd/MM/yyyy"
-                        String description = data[1];
-                        double amount = Double.parseDouble(data[2].replace(",", "."));
-                        // Replace comma with dot for decimal separator
-                        String category = data[3];
-
-                        expenses.add(new Expense(description, amount, date, ExpenseCategory.valueOf(category)));
-                    } catch (Exception e) {
-                        System.err.println("Error parsing line: " + line + ". Skipping.");
-                    }
-                } else {
-                    System.err.println("Invalid line format: " + line + ". Skipping.");
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            // Skip header line
+            String line = reader.readLine();
+            
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                if (data.length >= 4) {
+                    Expense expense = new Expense(
+                        data[0].trim(), // description
+                        new BigDecimal(data[1].trim()), // amount
+                        LocalDate.parse(data[2].trim(), formatter), // date
+                        ExpenseCategory.valueOf(data[3].trim().toUpperCase()) // category
+                    );
+                    expenses.add(expense);
                 }
             }
-
-        } catch (IOException e) {
-            System.err.println("Error reading CSV file: " + e.getMessage());
         }
-
         return expenses;
     }
 }

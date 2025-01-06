@@ -72,4 +72,8 @@ public class ExpenseService {
         writer.flush();
         return out.toByteArray();
     }
+
+    public void saveAllExpenses(List<Expense> expenses) {
+        expenseRepository.saveAll(expenses);
+    }
 } 
