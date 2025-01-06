@@ -8,8 +8,6 @@ import java.math.BigDecimal;
 @Table(name = "expenses")
 public class Expense {
 
-    private static long lastId = 0; // Static variable to keep track of the last assigned ID
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -72,7 +70,6 @@ public class Expense {
 
     // Constructor
     public Expense(String description, BigDecimal amount, LocalDate date, ExpenseCategory category) {
-        this.id = ++lastId;
         this.description = description;
         this.amount = amount;
         this.date = date;
